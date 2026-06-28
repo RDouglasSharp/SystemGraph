@@ -3,7 +3,8 @@
 A compact floating ticker tape for macOS that graphs CPU, GPU, and memory usage over time. Sits just above the Dock, always on top, no Dock icon.
 
 ![SysGraph screenshot](screenshot.png)
-![SysGraph screen capture](SystemGraphScreenRecording.mp4)
+
+And watch the video file SystemGraphScreenRecording.mp4 for a view of how the output updates.
 
 ## Building and running
 
