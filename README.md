@@ -32,6 +32,8 @@ pyw SysGraph.py
 
 On Windows the magenta series is **VRM**: GPU memory in use as a percentage of the GPU's own memory (dedicated VRAM on a discrete card; the GPU carveout on RTX Spark). **MEM** is physical RAM in use, as Task Manager shows it. Windows reports these as separate pools, so the two fills overlap from zero instead of being stacked as on the Mac. Without `nvidia-smi`, GPU and VRM show "n/a".
 
+If `nvidia-smi` lists an NPU (RTX Spark laptops have one), a yellow **NPU** utilization line and legend entry appear. On machines without an NPU, such as a desktop with an RTX 3090, they don't appear.
+
 ## What the four numbers mean
 
 **CPU** (green) — percentage of total CPU capacity in use across all cores, sampled as a delta between ticks so it reflects the current second rather than a cumulative average. Includes user, system, and nice time; excludes idle.

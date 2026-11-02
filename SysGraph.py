@@ -1,4 +1,4 @@
-"""SysGraph for Windows: a compact always-on-top graph of CPU, GPU, VRAM and memory.
+"""SysGraph for Windows: a compact always-on-top graph of CPU, GPU, NPU, VRAM and memory.
 
 Port of SysGraph.swift. Standard library only (tkinter + ctypes); GPU data comes
 from nvidia-smi, which ships with the NVIDIA driver.
@@ -28,6 +28,7 @@ COLORS = {
     "GPU": "#00e5ff",
     "VRM": "#ff33e6",
     "MEM": "#ff9500",
+    "NPU": "#ffd60a",
 }
 BG = "#141414"
 GRID = "#2a2a2a"
@@ -105,13 +106,15 @@ def memory_percent():
 class GpuSampler:
     """Streams nvidia-smi once per second in a background thread.
 
-    Uses the first device that reports a memory total, which skips the NPU that
-    nvidia-smi also lists on RTX Spark laptops.
+    The GPU is the first device that reports a memory total. A device whose name
+    contains "NPU" (RTX Spark laptops list one) supplies NPU utilization.
     """
 
     def __init__(self):
         self.util = 0.0
         self.vram = 0.0
+        self.npu = 0.0
+        self.has_npu = False
         self.name = None
         self.available = shutil.which("nvidia-smi") is not None
         self.proc = None
@@ -136,6 +139,13 @@ class GpuSampler:
         for line in self.proc.stdout:
             parts = [p.strip() for p in line.split(",")]
             if len(parts) < 5:
+                continue
+            if "NPU" in parts[1].upper():
+                try:
+                    self.npu = max(0.0, min(100.0, float(parts[2])))
+                    self.has_npu = True
+                except ValueError:
+                    pass
                 continue
             try:
                 util = float(parts[2])
@@ -252,6 +262,7 @@ class SysGraph:
             "GPU": self.gpu.util,
             "VRM": self.gpu.vram,
             "MEM": memory_percent(),
+            "NPU": self.gpu.npu,
         }
         for k, v in latest.items():
             s = self.series[k]
@@ -291,13 +302,16 @@ class SysGraph:
         lw = max(1, round(1.5 * self.scale))
         c.create_line(self._points(vrm, w, h), fill=COLORS["VRM"], width=max(1, round(self.scale)))
         c.create_line(self._points(mem, w, h), fill=COLORS["MEM"], width=lw)
+        if self.gpu.has_npu:
+            c.create_line(self._points(self.series["NPU"], w, h), fill=COLORS["NPU"], width=lw)
         c.create_line(self._points(self.series["GPU"], w, h), fill=COLORS["GPU"], width=lw)
         c.create_line(self._points(self.series["CPU"], w, h), fill=COLORS["CPU"], width=lw)
 
         font = ("Consolas", 7, "bold")
         x = int(6 * self.scale)
         y = int(4 * self.scale)
-        for k in ("CPU", "GPU", "VRM", "MEM"):
+        keys = ("CPU", "GPU", "NPU", "VRM", "MEM") if self.gpu.has_npu else ("CPU", "GPU", "VRM", "MEM")
+        for k in keys:
             text = f"{k} n/a" if k in ("GPU", "VRM") and not self.gpu.available else f"{k} {round(self.latest[k])}%"
             c.create_rectangle(x, y + 5 * self.scale, x + 8 * self.scale, y + 7 * self.scale,
                                fill=COLORS[k], outline="")
