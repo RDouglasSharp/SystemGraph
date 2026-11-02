@@ -28,7 +28,7 @@ Requires macOS 13+. The window is resizable and its position is saved between la
 pyw SysGraph.py
 ```
 
-(`python SysGraph.py` also works, but keeps a console window open.) Drag the window to move it; drag the bottom-right corner to resize it; right-click or press Esc to quit. The position is saved per screen size in `%APPDATA%\SysGraph\window.json`.
+(`python SysGraph.py` also works, but keeps a console window open.) Drag the window to move it; drag any edge or corner to resize it; right-click or press Esc to quit. The position is saved per screen size in `%APPDATA%\SysGraph\window.json`.
 
 On Windows the magenta series is **VRM**: GPU memory in use as a percentage of the GPU's own memory (dedicated VRAM on a discrete card; the GPU carveout on RTX Spark). **MEM** is physical RAM in use, as Task Manager shows it. Windows reports these as separate pools, so the two fills overlap from zero instead of being stacked as on the Mac. Without `nvidia-smi`, GPU and VRM show "n/a".
 

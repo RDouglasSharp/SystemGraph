@@ -6,7 +6,7 @@ from nvidia-smi, which ships with the NVIDIA driver.
 Run:       pyw SysGraph.py        (no console window)
        or  python SysGraph.py
 
-Drag the window to move it, drag the bottom-right corner to resize it,
+Drag the window to move it, drag any edge or corner to resize it,
 right-click for the menu (Quit). Position and size are saved per screen size.
 """
 
@@ -219,6 +219,7 @@ class SysGraph:
         self.menu = tk.Menu(self.root, tearoff=0)
         self.menu.add_command(label="Quit", command=self.quit)
 
+        self.canvas.bind("<Motion>", self._hover)
         self.canvas.bind("<ButtonPress-1>", self._press)
         self.canvas.bind("<B1-Motion>", self._drag)
         self.canvas.bind("<ButtonRelease-1>", lambda e: self._save())
@@ -229,22 +230,43 @@ class SysGraph:
 
         self.tick()
 
-    # Move by dragging anywhere; resize by dragging the bottom-right corner.
+    # Resize by dragging any edge or corner; move by dragging anywhere else.
+    CURSORS = {"n": "size_ns", "s": "size_ns", "w": "size_we", "e": "size_we",
+               "nw": "size_nw_se", "se": "size_nw_se", "ne": "size_ne_sw", "sw": "size_ne_sw"}
+
+    def _edge(self, e):
+        m = max(6, int(8 * self.scale))
+        w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
+        return ("n" if e.y < m else "s" if e.y >= h - m else "") + \
+               ("w" if e.x < m else "e" if e.x >= w - m else "")
+
+    def _hover(self, e):
+        self.canvas.configure(cursor=self.CURSORS.get(self._edge(e), "fleur"))
+
     def _press(self, e):
-        grip = int(12 * self.scale)
-        self.resizing = e.x >= self.canvas.winfo_width() - grip and e.y >= self.canvas.winfo_height() - grip
+        self.edge = self._edge(e)
         self.start = (e.x_root, e.y_root, self.root.winfo_x(), self.root.winfo_y(),
                       self.root.winfo_width(), self.root.winfo_height())
 
     def _drag(self, e):
         x0, y0, wx, wy, ww, wh = self.start
         dx, dy = e.x_root - x0, e.y_root - y0
-        if self.resizing:
-            nw = max(int(120 * self.scale), ww + dx)
-            nh = max(int(40 * self.scale), wh + dy)
-            self.root.geometry(f"{nw}x{nh}+{wx}+{wy}")
-        else:
+        if not self.edge:
             self.root.geometry(f"+{wx + dx}+{wy + dy}")
+            return
+        min_w, min_h = int(120 * self.scale), int(40 * self.scale)
+        x, y, w, h = wx, wy, ww, wh
+        if "e" in self.edge:
+            w = max(min_w, ww + dx)
+        if "w" in self.edge:
+            w = max(min_w, ww - dx)
+            x = wx + ww - w
+        if "s" in self.edge:
+            h = max(min_h, wh + dy)
+        if "n" in self.edge:
+            h = max(min_h, wh - dy)
+            y = wy + wh - h
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
 
     def _save(self):
         state = load_state()
