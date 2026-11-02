@@ -20,6 +20,18 @@ swiftc SysGraph.swift -o SysGraph && ./SysGraph
 
 Requires macOS 13+. The window is resizable and its position is saved between launches.
 
+## Windows version
+
+`SysGraph.py` is a Windows port. It uses only the Python standard library (tkinter + ctypes); GPU data comes from `nvidia-smi`, which comes with the NVIDIA driver. Tested on an RTX Spark N1X laptop (Windows on Arm, Python 3.13 ARM64); it should also work on discrete NVIDIA cards such as the RTX 3090.
+
+```
+pyw SysGraph.py
+```
+
+(`python SysGraph.py` also works, but keeps a console window open.) Drag the window to move it; drag the bottom-right corner to resize it; right-click or press Esc to quit. The position is saved per screen size in `%APPDATA%\SysGraph\window.json`.
+
+On Windows the magenta series is **VRM**: GPU memory in use as a percentage of the GPU's own memory (dedicated VRAM on a discrete card; the GPU carveout on RTX Spark). **MEM** is physical RAM in use, as Task Manager shows it. Windows reports these as separate pools, so the two fills overlap from zero instead of being stacked as on the Mac. Without `nvidia-smi`, GPU and VRM show "n/a".
+
 ## What the four numbers mean
 
 **CPU** (green) — percentage of total CPU capacity in use across all cores, sampled as a delta between ticks so it reflects the current second rather than a cumulative average. Includes user, system, and nice time; excludes idle.
